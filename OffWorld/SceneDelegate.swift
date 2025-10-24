@@ -12,8 +12,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         // Create the UIWindow and navigation stack
         let window = UIWindow(windowScene: windowScene)
-        let navController = UINavigationController(rootViewController: HomeScreenViewController())
-        navController.isNavigationBarHidden = true // Hide navigation bar for clean full-screen look
+        let navController = UINavigationController(rootViewController: AuthViewController())
         window.rootViewController = navController
         self.window = window
         window.makeKeyAndVisible()
