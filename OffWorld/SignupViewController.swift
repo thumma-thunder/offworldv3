@@ -15,7 +15,6 @@ final class SignupViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
-    private let titleLabel = UILabel()
     private let usernameField = UITextField()
     private let emailField = UITextField()
     private let passwordField = UITextField()
@@ -29,11 +28,11 @@ final class SignupViewController: UIViewController {
         view.backgroundColor = .systemBackground
         title = "Create Account"
         setupDatabase()
-        setupUI()
-        setupKeyboardObservers()
+        setupLayout()
+        registerForKeyboardNotifications()
     }
 
-    // MARK: - SQLite Setup
+    // MARK: - Database Setup
     private func setupDatabase() {
         let fileURL = try! FileManager.default
             .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
@@ -62,35 +61,27 @@ final class SignupViewController: UIViewController {
         }
     }
 
-    // MARK: - UI Setup
-    private func setupUI() {
-        // Scroll setup
+    // MARK: - Layout Setup
+    private func setupLayout() {
+        // ScrollView setup
         view.addSubview(scrollView)
-        scrollView.addSubview(contentView)
         scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.keyboardDismissMode = .interactive
+        scrollView.addSubview(contentView)
         contentView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.alwaysBounceVertical = true
 
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
-
-        // Title
-        titleLabel.text = "Join OffWorld 🌍"
-        titleLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
-        titleLabel.textColor = .systemBlue
-        titleLabel.textAlignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(titleLabel)
 
         // Fields
         [usernameField, emailField, passwordField, zipcodeField].forEach {
@@ -107,7 +98,7 @@ final class SignupViewController: UIViewController {
         zipcodeField.placeholder = "Zip Code"
         zipcodeField.keyboardType = .numberPad
 
-        // 👁️ Show/Hide Password Button
+        // 👁️ Show Password Button
         showPasswordButton.setImage(UIImage(systemName: "eye"), for: .normal)
         showPasswordButton.tintColor = .systemGray
         showPasswordButton.addTarget(self, action: #selector(togglePasswordVisibility), for: .touchUpInside)
@@ -115,12 +106,12 @@ final class SignupViewController: UIViewController {
         passwordField.rightView = showPasswordButton
         passwordField.rightViewMode = .always
 
-        // Account Type
+        // Account type
         accountTypeControl.selectedSegmentIndex = 0
         accountTypeControl.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(accountTypeControl)
 
-        // Button
+        // Signup button
         signupButton.setTitle("Create Account", for: .normal)
         signupButton.backgroundColor = .systemBlue
         signupButton.setTitleColor(.white, for: .normal)
@@ -130,31 +121,19 @@ final class SignupViewController: UIViewController {
         signupButton.addTarget(self, action: #selector(handleSignup), for: .touchUpInside)
         contentView.addSubview(signupButton)
 
-        // Layout (responsive & scrollable)
-        let centerYConstraint = contentView.centerYAnchor.constraint(equalTo: scrollView.centerYAnchor)
-        centerYConstraint.priority = .defaultLow
-
+        // Layout
         NSLayoutConstraint.activate([
-            centerYConstraint,
-
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 60),
-            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-
-            usernameField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 40),
+            usernameField.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 40),
             usernameField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 30),
             usernameField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -30),
-            usernameField.heightAnchor.constraint(equalToConstant: 50),
 
             emailField.topAnchor.constraint(equalTo: usernameField.bottomAnchor, constant: 20),
             emailField.leadingAnchor.constraint(equalTo: usernameField.leadingAnchor),
             emailField.trailingAnchor.constraint(equalTo: usernameField.trailingAnchor),
-            emailField.heightAnchor.constraint(equalToConstant: 50),
 
             passwordField.topAnchor.constraint(equalTo: emailField.bottomAnchor, constant: 20),
             passwordField.leadingAnchor.constraint(equalTo: usernameField.leadingAnchor),
             passwordField.trailingAnchor.constraint(equalTo: usernameField.trailingAnchor),
-            passwordField.heightAnchor.constraint(equalToConstant: 50),
 
             accountTypeControl.topAnchor.constraint(equalTo: passwordField.bottomAnchor, constant: 25),
             accountTypeControl.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
@@ -162,19 +141,17 @@ final class SignupViewController: UIViewController {
             zipcodeField.topAnchor.constraint(equalTo: accountTypeControl.bottomAnchor, constant: 25),
             zipcodeField.leadingAnchor.constraint(equalTo: usernameField.leadingAnchor),
             zipcodeField.trailingAnchor.constraint(equalTo: usernameField.trailingAnchor),
-            zipcodeField.heightAnchor.constraint(equalToConstant: 50),
 
-            signupButton.topAnchor.constraint(equalTo: zipcodeField.bottomAnchor, constant: 50),
+            signupButton.topAnchor.constraint(equalTo: zipcodeField.bottomAnchor, constant: 40),
             signupButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            signupButton.widthAnchor.constraint(equalToConstant: 220),
-            signupButton.heightAnchor.constraint(equalToConstant: 55),
-
-            signupButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -60)
+            signupButton.widthAnchor.constraint(equalToConstant: 200),
+            signupButton.heightAnchor.constraint(equalToConstant: 50),
+            signupButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -50)
         ])
     }
 
     // MARK: - Keyboard Handling
-    private func setupKeyboardObservers() {
+    private func registerForKeyboardNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)),
                                                name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)),
@@ -182,17 +159,14 @@ final class SignupViewController: UIViewController {
     }
 
     @objc private func keyboardWillShow(_ notification: Notification) {
-        guard let info = notification.userInfo,
-              let kbFrame = info[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-
-        let bottomInset = kbFrame.height - view.safeAreaInsets.bottom
-        scrollView.contentInset.bottom = bottomInset
-        scrollView.verticalScrollIndicatorInsets.bottom = bottomInset
+        if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
+            let height = keyboardFrame.cgRectValue.height
+            scrollView.contentInset.bottom = height + 20
+        }
     }
 
     @objc private func keyboardWillHide(_ notification: Notification) {
         scrollView.contentInset.bottom = 0
-        scrollView.verticalScrollIndicatorInsets.bottom = 0
     }
 
     // MARK: - Password Toggle
@@ -214,18 +188,19 @@ final class SignupViewController: UIViewController {
         }
 
         let accountType = accountTypeControl.titleForSegment(at: accountTypeControl.selectedSegmentIndex) ?? "Individual"
+
         let insertQuery = "INSERT INTO Users (username, email, password, accountType, zipcode) VALUES (?, ?, ?, ?, ?);"
         var stmt: OpaquePointer?
 
         if sqlite3_prepare_v2(db, insertQuery, -1, &stmt, nil) == SQLITE_OK {
-            sqlite3_bind_text(stmt, 1, (username as NSString).utf8String,   -1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(stmt, 2, (email as NSString).utf8String,      -1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(stmt, 3, (password as NSString).utf8String,   -1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(stmt, 4, (accountType as NSString).utf8String,-1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(stmt, 5, (zipcode as NSString).utf8String,    -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 1, (username as NSString).utf8String, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 2, (email as NSString).utf8String, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 3, (password as NSString).utf8String, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 4, (accountType as NSString).utf8String, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 5, (zipcode as NSString).utf8String, -1, SQLITE_TRANSIENT)
 
             if sqlite3_step(stmt) == SQLITE_DONE {
-                print("✅ User saved successfully in database.")
+                print("✅ User saved successfully.")
                 showAlert(title: "Success", message: "Account created successfully!") {
                     self.navigationController?.pushViewController(MainHomeViewController(), animated: true)
                 }
@@ -241,7 +216,7 @@ final class SignupViewController: UIViewController {
         sqlite3_finalize(stmt)
     }
 
-    // MARK: - Alerts
+    // MARK: - Helper
     private func showAlert(title: String, message: String, completion: (() -> Void)? = nil) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in completion?() })

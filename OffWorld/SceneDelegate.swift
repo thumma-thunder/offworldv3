@@ -1,3 +1,10 @@
+//
+//  SceneDelegate.swift
+//  OffWorld
+//
+//  Created by Joel Gaikwad on 10/16/25.
+//
+
 import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -10,9 +17,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         guard let windowScene = (scene as? UIWindowScene) else { return }
 
-        // Create the UIWindow and navigation stack
         let window = UIWindow(windowScene: windowScene)
-        let navController = UINavigationController(rootViewController: AuthViewController())
+        let navController = UINavigationController(rootViewController: AccountTypeViewController())
         window.rootViewController = navController
         self.window = window
         window.makeKeyAndVisible()
