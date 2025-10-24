@@ -11,6 +11,8 @@ import UIKit
 
 final class AuthViewController: UIViewController {
 
+    var userType: String?
+
     private let titleLabel = UILabel()
     private let loginButton = UIButton(type: .system)
     private let signupButton = UIButton(type: .system)
