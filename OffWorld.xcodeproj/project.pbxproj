@@ -7,17 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		751FF01F2EA1D14700F8B868 /* AuthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751FF01E2EA1D13E00F8B868 /* AuthViewController.swift */; };
+		751FF0212EA1D18500F8B868 /* SignupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751FF0202EA1D18300F8B868 /* SignupViewController.swift */; };
+		751FF0232EA1D3A000F8B868 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751FF0222EA1D39F00F8B868 /* LoginViewController.swift */; };
+		751FF0252EA1DC0A00F8B868 /* MainHomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751FF0242EA1DC0800F8B868 /* MainHomeViewController.swift */; };
+		751FF0272EA1E42C00F8B868 /* DatabaseHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751FF0262EA1E42800F8B868 /* DatabaseHelper.swift */; };
 		A10000010000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010000000000000000 /* AppDelegate.swift */; };
 		A10000010000000000000003 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010000000000000002 /* SceneDelegate.swift */; };
 		A10000010000000000000005 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010000000000000004 /* ViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A1000001000000000000000A /* OffWorld.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OffWorld.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		751FF01E2EA1D13E00F8B868 /* AuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewController.swift; sourceTree = "<group>"; };
+		751FF0202EA1D18300F8B868 /* SignupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupViewController.swift; sourceTree = "<group>"; };
+		751FF0222EA1D39F00F8B868 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
+		751FF0242EA1DC0800F8B868 /* MainHomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainHomeViewController.swift; sourceTree = "<group>"; };
+		751FF0262EA1E42800F8B868 /* DatabaseHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseHelper.swift; sourceTree = "<group>"; };
 		A10000010000000000000000 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A10000010000000000000002 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		A10000010000000000000004 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		A10000010000000000000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1000001000000000000000A /* OffWorld.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OffWorld.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,7 +41,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		A1000001000000000000000C /* OffWorld */ = {
+		A1000001000000000000000C = {
 			isa = PBXGroup;
 			children = (
 				A1000001000000000000000D /* OffWorld */,
@@ -42,6 +52,11 @@
 		A1000001000000000000000D /* OffWorld */ = {
 			isa = PBXGroup;
 			children = (
+				751FF0262EA1E42800F8B868 /* DatabaseHelper.swift */,
+				751FF0242EA1DC0800F8B868 /* MainHomeViewController.swift */,
+				751FF0222EA1D39F00F8B868 /* LoginViewController.swift */,
+				751FF0202EA1D18300F8B868 /* SignupViewController.swift */,
+				751FF01E2EA1D13E00F8B868 /* AuthViewController.swift */,
 				A10000010000000000000000 /* AppDelegate.swift */,
 				A10000010000000000000002 /* SceneDelegate.swift */,
 				A10000010000000000000004 /* ViewController.swift */,
@@ -101,7 +116,7 @@
 				en,
 				Base,
 			);
-			mainGroup = A1000001000000000000000C /* OffWorld */;
+			mainGroup = A1000001000000000000000C;
 			productRefGroup = A1000001000000000000000E /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -126,7 +141,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				751FF0232EA1D3A000F8B868 /* LoginViewController.swift in Sources */,
+				751FF01F2EA1D14700F8B868 /* AuthViewController.swift in Sources */,
+				751FF0252EA1DC0A00F8B868 /* MainHomeViewController.swift in Sources */,
 				A10000010000000000000005 /* ViewController.swift in Sources */,
+				751FF0272EA1E42C00F8B868 /* DatabaseHelper.swift in Sources */,
+				751FF0212EA1D18500F8B868 /* SignupViewController.swift in Sources */,
 				A10000010000000000000001 /* AppDelegate.swift in Sources */,
 				A10000010000000000000003 /* SceneDelegate.swift in Sources */,
 			);
@@ -259,6 +279,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VFX8RB4D7Z;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = OffWorld/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -282,6 +303,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VFX8RB4D7Z;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = OffWorld/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -303,20 +325,20 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A10000010000000000000014 /* Build configuration list for PBXProject "OffWorld" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A10000010000000000000015 /* Debug */,
-				A10000010000000000000016 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		A10000010000000000000010 /* Build configuration list for PBXNativeTarget "OffWorld" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A10000010000000000000017 /* Debug */,
 				A10000010000000000000018 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000010000000000000014 /* Build configuration list for PBXProject "OffWorld" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000010000000000000015 /* Debug */,
+				A10000010000000000000016 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

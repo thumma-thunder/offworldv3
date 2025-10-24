@@ -1,50 +1,63 @@
+//
+//  ViewController.swift
+//  OffWorld
+//
+//  Created by Joel Gaikwad on 10/16/25.
+//
+
 import UIKit
 
-class ViewController: UIViewController {
+final class ViewController: UIViewController {
+    
+    // MARK: - UI Components
+    private let titleLabel = UILabel()
+    private let exploreButton = UIButton(type: .system)
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .systemBackground
         setupUI()
     }
-    
+
+    // MARK: - Setup UI
     private func setupUI() {
-        view.backgroundColor = .systemBackground
-        
-        let titleLabel = UILabel()
-        titleLabel.text = "Welcome to OffWorld"
-        titleLabel.font = UIFont.systemFont(ofSize: 28, weight: .bold)
-        titleLabel.textAlignment = .center
+        // Title label
+        titleLabel.text = "Welcome to OffWorld 🌍"
+        titleLabel.font = UIFont.systemFont(ofSize: 30, weight: .bold)
         titleLabel.textColor = .systemBlue
+        titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        let button = UIButton(type: .system)
-        button.setTitle("Explore OffWorld", for: .normal)
-        button.backgroundColor = .systemBlue
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 12
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
-        
+
+        // Button
+        exploreButton.setTitle("Explore OffWorld", for: .normal)
+        exploreButton.backgroundColor = .systemBlue
+        exploreButton.setTitleColor(.white, for: .normal)
+        exploreButton.layer.cornerRadius = 12
+        exploreButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        exploreButton.translatesAutoresizingMaskIntoConstraints = false
+        exploreButton.addTarget(self, action: #selector(exploreTapped), for: .touchUpInside)
+
+        // Add subviews
         view.addSubview(titleLabel)
-        view.addSubview(button)
-        
+        view.addSubview(exploreButton)
+
+        // Constraints
         NSLayoutConstraint.activate([
             titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -50),
-            titleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
-            
-            button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            button.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 30),
-            button.widthAnchor.constraint(equalToConstant: 200),
-            button.heightAnchor.constraint(equalToConstant: 50)
+            titleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -100),
+            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
+            exploreButton.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 40),
+            exploreButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            exploreButton.widthAnchor.constraint(equalToConstant: 220),
+            exploreButton.heightAnchor.constraint(equalToConstant: 55)
         ])
     }
-    
-    @objc private func buttonTapped() {
-        let alert = UIAlertController(title: "OffWorld", message: "Welcome to your iOS app! 🚀", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Awesome!", style: .default))
-        present(alert, animated: true)
+
+    // MARK: - Actions
+    @objc private func exploreTapped() {
+        let homeVC = MainHomeViewController()
+        navigationController?.pushViewController(homeVC, animated: true)
     }
 }
