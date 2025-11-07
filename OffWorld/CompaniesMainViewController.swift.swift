@@ -20,6 +20,14 @@ final class CompaniesMainViewController: UIViewController {
         setupPlaceholderList()   // You will later replace this with real DB loading
     }
 
+    override var prefersStatusBarHidden: Bool {
+        return true
+    }
+
+    override var prefersHomeIndicatorAutoHidden: Bool {
+        return true
+    }
+
     private func setupScrollView() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)

@@ -20,6 +20,14 @@ final class AccountTypeViewController: UIViewController {
         setupUI()
     }
 
+    override var prefersStatusBarHidden: Bool {
+        return true
+    }
+
+    override var prefersHomeIndicatorAutoHidden: Bool {
+        return true
+    }
+
     private func setupUI() {
 
         // 🌍 Title Label

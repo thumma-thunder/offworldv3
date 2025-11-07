@@ -24,6 +24,14 @@ final class MainHomeViewController: UIViewController {
         loadCompanies()
     }
 
+    override var prefersStatusBarHidden: Bool {
+        return true
+    }
+
+    override var prefersHomeIndicatorAutoHidden: Bool {
+        return true
+    }
+
     // MARK: - Database Setup
     private func setupDatabase() {
         let fileURL = try! FileManager.default
