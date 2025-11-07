@@ -2,158 +2,218 @@
 //  MainHomeViewController.swift
 //  OffWorld
 //
-//  Created by Joel Gaikwad on 10/16/25.
+//  Created by Joel Gaikwad on 10/24/25.
 //
 
 import UIKit
+import SQLite3
 
 final class MainHomeViewController: UIViewController {
 
+    private var db: OpaquePointer?
     private let scrollView = UIScrollView()
-    private let contentView = UIView()
-    private let headerImageView = UIImageView(image: UIImage(systemName: "globe"))
-    private let titleLabel = UILabel()
-    private let aboutSection = UIView()
-    private let featuresSection = UIView()
-    private let projectsSection = UIView()
-    private let contactSection = UIView()
-    private let testLoginButton = UIButton(type: .system)
+    private let contentView = UIStackView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
         title = "OffWorld Home"
-        setupScrollLayout()
-        setupContent()
+        view.backgroundColor = .systemBackground
+        setupDatabase()
+        setupScrollView()
+        setupHeader()
+        loadCompanies()
     }
 
-    // MARK: - Scroll + Layout
-    private func setupScrollLayout() {
-        // ScrollView setup
+    // MARK: - Database Setup
+    private func setupDatabase() {
+        let fileURL = try! FileManager.default
+            .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            .appendingPathComponent("OffWorldUsers.sqlite")
+
+        if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
+            print("❌ Error opening database")
+        }
+    }
+
+    // MARK: - Scroll + Content Setup
+    private func setupScrollView() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.showsVerticalScrollIndicator = true
-        scrollView.keyboardDismissMode = .interactive
         view.addSubview(scrollView)
 
-        // Content View inside scrollView
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+
+        contentView.axis = .vertical
+        contentView.spacing = 20
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
 
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 20),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
     }
 
-    // MARK: - Content
-    private func setupContent() {
-        headerImageView.tintColor = .systemBlue
-        headerImageView.contentMode = .scaleAspectFit
-        headerImageView.translatesAutoresizingMaskIntoConstraints = false
+    // MARK: - Header UI
+    private func setupHeader() {
+        let accountType = UserDefaults.standard.string(forKey: "accountType") ?? "Individual"
 
+        let logoImageView = UIImageView(image: UIImage(systemName: "globe"))
+        logoImageView.tintColor = .systemBlue
+        logoImageView.contentMode = .scaleAspectFit
+        logoImageView.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
         titleLabel.text = "🌍 OffWorld"
-        titleLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
-        titleLabel.textColor = .systemBlue
+        titleLabel.font = UIFont.systemFont(ofSize: 28, weight: .bold)
         titleLabel.textAlignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.textColor = .systemBlue
 
-        [aboutSection, featuresSection, projectsSection, contactSection].forEach {
-            $0.backgroundColor = UIColor.secondarySystemBackground
-            $0.layer.cornerRadius = 12
-            $0.layer.borderWidth = 1
-            $0.layer.borderColor = UIColor.systemGray4.cgColor
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
+        // Button Stack
+        let buttonStack = UIStackView()
+        buttonStack.axis = .horizontal
+        buttonStack.spacing = 20
+        buttonStack.distribution = .fillEqually
+        buttonStack.translatesAutoresizingMaskIntoConstraints = false
+
+        // 👔 Show Add Company button only for Business users
+        if accountType == "Business" {
+            let addCompanyButton = UIButton(type: .system)
+            addCompanyButton.setTitle("Add Company", for: .normal)
+            addCompanyButton.backgroundColor = .systemBlue
+            addCompanyButton.setTitleColor(.white, for: .normal)
+            addCompanyButton.layer.cornerRadius = 10
+            addCompanyButton.heightAnchor.constraint(equalToConstant: 45).isActive = true
+            addCompanyButton.addTarget(self, action: #selector(openAddCompany), for: .touchUpInside)
+            buttonStack.addArrangedSubview(addCompanyButton)
         }
 
-        contentView.addSubview(headerImageView)
-        contentView.addSubview(titleLabel)
+        // 🧍 Test Login (visible to everyone)
+        let loginButton = UIButton(type: .system)
+        loginButton.setTitle("Test Login", for: .normal)
+        loginButton.backgroundColor = .systemGray
+        loginButton.setTitleColor(.white, for: .normal)
+        loginButton.layer.cornerRadius = 10
+        loginButton.heightAnchor.constraint(equalToConstant: 45).isActive = true
+        loginButton.addTarget(self, action: #selector(openLogin), for: .touchUpInside)
 
-        let aboutLabel = makeLabel("About Section — describe your app’s mission, vision, or purpose here.")
-        let featuresLabel = makeLabel("Features Section — list main features or goals.")
-        let projectsLabel = makeLabel("Projects Section — showcase your portfolio or achievements.")
-        let contactLabel = makeLabel("Contact Section — add links, email, or footer details here.")
+        buttonStack.addArrangedSubview(loginButton)
 
-        [aboutSection: aboutLabel, featuresSection: featuresLabel,
-         projectsSection: projectsLabel, contactSection: contactLabel].forEach { section, label in
-            section.addSubview(label)
-            NSLayoutConstraint.activate([
-                label.topAnchor.constraint(equalTo: section.topAnchor, constant: 16),
-                label.leadingAnchor.constraint(equalTo: section.leadingAnchor, constant: 16),
-                label.trailingAnchor.constraint(equalTo: section.trailingAnchor, constant: -16),
-                label.bottomAnchor.constraint(equalTo: section.bottomAnchor, constant: -16)
-            ])
-        }
+        // Header Stack
+        let headerStack = UIStackView(arrangedSubviews: [logoImageView, titleLabel, buttonStack])
+        headerStack.axis = .vertical
+        headerStack.spacing = 16
+        headerStack.alignment = .center
+        headerStack.translatesAutoresizingMaskIntoConstraints = false
 
-        // Test Login Button
-        testLoginButton.setTitle("🔐 Test Login", for: .normal)
-        testLoginButton.backgroundColor = .systemBlue
-        testLoginButton.setTitleColor(.white, for: .normal)
-        testLoginButton.layer.cornerRadius = 10
-        testLoginButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        testLoginButton.translatesAutoresizingMaskIntoConstraints = false
-        testLoginButton.addTarget(self, action: #selector(openLogin), for: .touchUpInside)
-        contentView.addSubview(testLoginButton)
+        contentView.addArrangedSubview(headerStack)
 
-        // Layout constraints
-        NSLayoutConstraint.activate([
-            headerImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 40),
-            headerImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            headerImageView.heightAnchor.constraint(equalToConstant: 80),
-
-            titleLabel.topAnchor.constraint(equalTo: headerImageView.bottomAnchor, constant: 12),
-            titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-
-            aboutSection.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 30),
-            aboutSection.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            aboutSection.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            aboutSection.heightAnchor.constraint(equalToConstant: 150),
-
-            featuresSection.topAnchor.constraint(equalTo: aboutSection.bottomAnchor, constant: 25),
-            featuresSection.leadingAnchor.constraint(equalTo: aboutSection.leadingAnchor),
-            featuresSection.trailingAnchor.constraint(equalTo: aboutSection.trailingAnchor),
-            featuresSection.heightAnchor.constraint(equalToConstant: 150),
-
-            projectsSection.topAnchor.constraint(equalTo: featuresSection.bottomAnchor, constant: 25),
-            projectsSection.leadingAnchor.constraint(equalTo: aboutSection.leadingAnchor),
-            projectsSection.trailingAnchor.constraint(equalTo: aboutSection.trailingAnchor),
-            projectsSection.heightAnchor.constraint(equalToConstant: 150),
-
-            contactSection.topAnchor.constraint(equalTo: projectsSection.bottomAnchor, constant: 25),
-            contactSection.leadingAnchor.constraint(equalTo: aboutSection.leadingAnchor),
-            contactSection.trailingAnchor.constraint(equalTo: aboutSection.trailingAnchor),
-            contactSection.heightAnchor.constraint(equalToConstant: 150),
-
-            testLoginButton.topAnchor.constraint(equalTo: contactSection.bottomAnchor, constant: 40),
-            testLoginButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            testLoginButton.widthAnchor.constraint(equalToConstant: 200),
-            testLoginButton.heightAnchor.constraint(equalToConstant: 50),
-            testLoginButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -80)
-        ])
+        // Small welcome text
+        let welcomeLabel = UILabel()
+        welcomeLabel.text = "Welcome, \(accountType) User!"
+        welcomeLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        welcomeLabel.textColor = .secondaryLabel
+        welcomeLabel.textAlignment = .center
+        contentView.addArrangedSubview(welcomeLabel)
     }
 
-    private func makeLabel(_ text: String) -> UILabel {
-        let label = UILabel()
-        label.text = text
-        label.font = UIFont.systemFont(ofSize: 15)
-        label.textAlignment = .center
-        label.textColor = .secondaryLabel
-        label.numberOfLines = 0
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+    // MARK: - Load Companies
+    private func loadCompanies() {
+        let query = "SELECT name, description, category FROM Companies ORDER BY created_at DESC;"
+        var stmt: OpaquePointer?
+
+        if sqlite3_prepare_v2(db, query, -1, &stmt, nil) == SQLITE_OK {
+            var hasCompanies = false
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                hasCompanies = true
+                let name = String(cString: sqlite3_column_text(stmt, 0))
+                let desc = String(cString: sqlite3_column_text(stmt, 1))
+                let category = String(cString: sqlite3_column_text(stmt, 2))
+                addCompanySection(name: name, description: desc, category: category)
+            }
+            if !hasCompanies { addPlaceholderSection() }
+        } else {
+            print("❌ Failed to fetch companies.")
+        }
+        sqlite3_finalize(stmt)
+    }
+
+    // MARK: - Company Cards
+    private func addCompanySection(name: String, description: String, category: String) {
+        let card = UIView()
+        card.backgroundColor = .secondarySystemBackground
+        card.layer.cornerRadius = 14
+        card.layer.shadowColor = UIColor.black.cgColor
+        card.layer.shadowOpacity = 0.1
+        card.layer.shadowOffset = CGSize(width: 0, height: 3)
+        card.layer.shadowRadius = 5
+        card.translatesAutoresizingMaskIntoConstraints = false
+
+        let nameLabel = UILabel()
+        nameLabel.text = name
+        nameLabel.font = UIFont.boldSystemFont(ofSize: 20)
+        nameLabel.textColor = .systemBlue
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let descLabel = UILabel()
+        descLabel.text = description.isEmpty ? "No description provided." : description
+        descLabel.numberOfLines = 0
+        descLabel.textColor = .secondaryLabel
+        descLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let categoryLabel = UILabel()
+        categoryLabel.text = "Category: \(category)"
+        categoryLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        categoryLabel.textColor = .systemGray
+        categoryLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        card.addSubview(nameLabel)
+        card.addSubview(descLabel)
+        card.addSubview(categoryLabel)
+
+        NSLayoutConstraint.activate([
+            nameLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 15),
+            nameLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 15),
+            nameLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -15),
+
+            descLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 10),
+            descLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            descLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
+
+            categoryLabel.topAnchor.constraint(equalTo: descLabel.bottomAnchor, constant: 8),
+            categoryLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            categoryLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
+            categoryLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -15)
+        ])
+
+        contentView.addArrangedSubview(card)
+    }
+
+    private func addPlaceholderSection() {
+        let placeholder = UILabel()
+        placeholder.text = "🚀 No companies yet — be the first to add yours!"
+        placeholder.textAlignment = .center
+        placeholder.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        placeholder.textColor = .secondaryLabel
+        placeholder.numberOfLines = 0
+        contentView.addArrangedSubview(placeholder)
     }
 
     // MARK: - Navigation
+    @objc private func openAddCompany() {
+        let addVC = AddCompanyViewController()
+        navigationController?.pushViewController(addVC, animated: true)
+    }
+
     @objc private func openLogin() {
-        navigationController?.pushViewController(LoginViewController(), animated: true)
+        let loginVC = LoginViewController()
+        navigationController?.pushViewController(loginVC, animated: true)
     }
 }
