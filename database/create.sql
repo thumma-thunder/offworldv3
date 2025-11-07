@@ -10,6 +10,15 @@ CREATE TABLE users(
     password varchar(255)
 );
 
+-- talk to noah about making a set number of categories
+CREATE TABLE company(
+    companyID SERIAL PRIMARY KEY,
+    companyName varchar(100),
+    companyWebsite varchar(250),
+    companyDescription varchar(1000),
+    companyCategory varchar(30)
+);
+
 CREATE TABLE stickerSize(
     stickerSizeID SERIAL PRIMARY KEY,
     stickerSize varchar(1)
