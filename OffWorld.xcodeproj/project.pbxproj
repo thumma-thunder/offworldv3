@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		63C15CCE2EBE97940057DCFE /* CompaniesMainViewController.swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C15CCD2EBE97910057DCFE /* CompaniesMainViewController.swift.swift */; };
 		751FF0212EA1D18500F8B868 /* SignupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751FF0202EA1D18300F8B868 /* SignupViewController.swift */; };
 		751FF0232EA1D3A000F8B868 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751FF0222EA1D39F00F8B868 /* LoginViewController.swift */; };
 		751FF0252EA1DC0A00F8B868 /* MainHomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751FF0242EA1DC0800F8B868 /* MainHomeViewController.swift */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		63C15CCD2EBE97910057DCFE /* CompaniesMainViewController.swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompaniesMainViewController.swift.swift; sourceTree = "<group>"; };
 		751FF0202EA1D18300F8B868 /* SignupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupViewController.swift; sourceTree = "<group>"; };
 		751FF0222EA1D39F00F8B868 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
 		751FF0242EA1DC0800F8B868 /* MainHomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainHomeViewController.swift; sourceTree = "<group>"; };
@@ -54,6 +56,7 @@
 		A1000001000000000000000D /* OffWorld */ = {
 			isa = PBXGroup;
 			children = (
+				63C15CCD2EBE97910057DCFE /* CompaniesMainViewController.swift.swift */,
 				75F617C92EBD955D00DCC613 /* AddCompanyViewController.swift */,
 				75F617C72EAC0C3200DCC613 /* AccountTypeViewController.swift */,
 				751FF0262EA1E42800F8B868 /* DatabaseHelper.swift */,
@@ -148,6 +151,7 @@
 				751FF0232EA1D3A000F8B868 /* LoginViewController.swift in Sources */,
 				751FF0252EA1DC0A00F8B868 /* MainHomeViewController.swift in Sources */,
 				A10000010000000000000005 /* ViewController.swift in Sources */,
+				63C15CCE2EBE97940057DCFE /* CompaniesMainViewController.swift.swift in Sources */,
 				751FF0272EA1E42C00F8B868 /* DatabaseHelper.swift in Sources */,
 				751FF0212EA1D18500F8B868 /* SignupViewController.swift in Sources */,
 				A10000010000000000000001 /* AppDelegate.swift in Sources */,
