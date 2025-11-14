@@ -7,6 +7,7 @@ CREATE TABLE users(
     userID SERIAL PRIMARY KEY,
     username varchar(30),
     userTypeID INT,
+    userTypeID references userType(userTypeID),
     password varchar(255)
 );
 
@@ -27,6 +28,7 @@ CREATE TABLE stickerSize(
 CREATE TABLE stickers(
     stickerID SERIAL PRIMARY KEY,
     stickerSizeID varchar(1),
+    stickerSizeID references stickerSize(sti)
     stickerLogo OID,
 );
 
