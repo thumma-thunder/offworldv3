@@ -17,7 +17,8 @@ CREATE TABLE company(
     companyName varchar(100),
     companyWebsite varchar(250),
     companyDescription varchar(1000),
-    companyCategory varchar(30)
+    companyCategory varchar(30),
+    companyZipcode INT
 );
 
 CREATE TABLE stickerSize(

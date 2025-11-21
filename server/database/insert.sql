@@ -1,0 +1,1 @@
+insert into userType (typeName)values ("B", "I");
