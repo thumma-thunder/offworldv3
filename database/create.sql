@@ -1,39 +1,61 @@
-CREATE TABLE userType(
+-- ============================
+-- USER TYPES
+-- ============================
+
+CREATE TABLE userType (
     userTypeID SERIAL PRIMARY KEY,
-    typeName varchar(1)
+    typeName VARCHAR(30) NOT NULL
 );
 
-CREATE TABLE users(
+-- ============================
+-- USERS
+-- ============================
+
+CREATE TABLE users (
     userID SERIAL PRIMARY KEY,
-    username varchar(30),
-    userTypeID INT,
-    userTypeID references userType(userTypeID),
-    password varchar(255)
+    username VARCHAR(30) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    userTypeID INT REFERENCES userType(userTypeID)
 );
 
--- talk to noah about making a set number of categories
-CREATE TABLE company(
+-- ============================
+-- COMPANIES
+-- ============================
+
+CREATE TABLE company (
     companyID SERIAL PRIMARY KEY,
-    companyName varchar(100),
-    companyWebsite varchar(250),
-    companyDescription varchar(1000),
-    companyCategory varchar(30),
+    companyName VARCHAR(100) NOT NULL,
+    companyWebsite VARCHAR(250),
+    companyDescription VARCHAR(1000),
+    companyCategory VARCHAR(30),
     companyZipcode INT
 );
 
-CREATE TABLE stickerSize(
+-- ============================
+-- STICKER SIZES
+-- ============================
+
+CREATE TABLE stickerSize (
     stickerSizeID SERIAL PRIMARY KEY,
-    stickerSize varchar(1)
+    stickerSize VARCHAR(10) NOT NULL
 );
 
-CREATE TABLE stickers(
+-- ============================
+-- STICKERS
+-- ============================
+
+CREATE TABLE stickers (
     stickerID SERIAL PRIMARY KEY,
-    stickerSizeID varchar(1),
-    stickerSizeID references stickerSize(sti)
-    stickerLogo OID,
+    stickerSizeID INT REFERENCES stickerSize(stickerSizeID),
+    stickerLogo OID -- PostgreSQL large object (your image)
 );
 
-CREATE TABLE usersToStickers(
-    stickerID INT,
-    userID INT
+-- ============================
+-- USER → STICKERS LINK (many to many)
+-- ============================
+
+CREATE TABLE usersToStickers (
+    userID INT REFERENCES users(userID),
+    stickerID INT REFERENCES stickers(stickerID),
+    PRIMARY KEY (userID, stickerID)
 );
