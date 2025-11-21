@@ -7,6 +7,7 @@ import UIKit
 
 final class CompaniesMainViewController: UIViewController {
 
+    private let dbHelper = DatabaseHelper.shared
     private let scrollView = UIScrollView()
     private let listStack = UIStackView()
 
@@ -16,8 +17,11 @@ final class CompaniesMainViewController: UIViewController {
         view.backgroundColor = .systemBackground
 
         setupScrollView()
-        setupHeaderDependingOnUser()
-        setupPlaceholderList()   // You will later replace this with real DB loading
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        reloadCompanyList()
     }
 
     private func setupScrollView() {
@@ -64,11 +68,23 @@ final class CompaniesMainViewController: UIViewController {
         }
     }
 
-    // --- Template placeholder rectangles ---
-    private func setupPlaceholderList() {
-        for i in 1...5 {
-            let card = placeholderCard(text: "Company \(i)")
-            listStack.addArrangedSubview(card)
+    private func reloadCompanyList() {
+        listStack.arrangedSubviews.forEach { view in
+            listStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+
+        setupHeaderDependingOnUser()
+
+        let companies = dbHelper.fetchCompanies()
+
+        if companies.isEmpty {
+            let emptyView = placeholderCard(text: "🚀 No companies yet. Add yours to get started!")
+            listStack.addArrangedSubview(emptyView)
+        } else {
+            companies.forEach { company in
+                listStack.addArrangedSubview(companyCard(for: company))
+            }
         }
     }
 
@@ -83,11 +99,59 @@ final class CompaniesMainViewController: UIViewController {
         label.font = UIFont.boldSystemFont(ofSize: 20)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.numberOfLines = 0
 
         card.addSubview(label)
         NSLayoutConstraint.activate([
             label.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            label.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
             label.centerYAnchor.constraint(equalTo: card.centerYAnchor)
+        ])
+
+        return card
+    }
+
+    private func companyCard(for company: Company) -> UIView {
+        let card = UIView()
+        card.backgroundColor = UIColor.secondarySystemBackground
+        card.layer.cornerRadius = 14
+        card.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+
+        let nameLabel = UILabel()
+        nameLabel.text = company.name
+        nameLabel.font = UIFont.boldSystemFont(ofSize: 20)
+        nameLabel.textColor = .systemBlue
+
+        let descriptionLabel = UILabel()
+        descriptionLabel.text = company.description.isEmpty ? "No description provided." : company.description
+        descriptionLabel.numberOfLines = 0
+        descriptionLabel.textColor = .secondaryLabel
+
+        let categoryLabel = UILabel()
+        categoryLabel.text = company.category.isEmpty ? "Category: Unspecified" : "Category: \(company.category)"
+        categoryLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        categoryLabel.textColor = .systemGray
+
+        let stack = UIStackView(arrangedSubviews: [nameLabel, descriptionLabel, categoryLabel])
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        if !company.website.isEmpty {
+            let websiteLabel = UILabel()
+            websiteLabel.text = company.website
+            websiteLabel.font = UIFont.systemFont(ofSize: 14)
+            websiteLabel.textColor = .link
+            websiteLabel.numberOfLines = 0
+            stack.addArrangedSubview(websiteLabel)
+        }
+
+        card.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: card.layoutMarginsGuide.topAnchor),
+            stack.leadingAnchor.constraint(equalTo: card.layoutMarginsGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: card.layoutMarginsGuide.trailingAnchor),
+            stack.bottomAnchor.constraint(equalTo: card.layoutMarginsGuide.bottomAnchor)
         ])
 
         return card
