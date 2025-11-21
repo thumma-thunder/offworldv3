@@ -6,10 +6,11 @@
 //
 
 import UIKit
+import SQLite3
 
 final class AddCompanyViewController: UIViewController {
 
-    private let dbHelper = DatabaseHelper.shared
+    private var db: OpaquePointer?
 
     private let nameField = UITextField()
     private let descriptionField = UITextField()
@@ -21,7 +22,18 @@ final class AddCompanyViewController: UIViewController {
         super.viewDidLoad()
         title = "Add Your Company"
         view.backgroundColor = .systemBackground
+        setupDatabase()
         setupUI()
+    }
+
+    private func setupDatabase() {
+        let fileURL = try! FileManager.default
+            .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            .appendingPathComponent("OffWorldUsers.sqlite")
+
+        if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
+            print("Error opening database")
+        }
     }
 
     private func setupUI() {
@@ -69,27 +81,25 @@ final class AddCompanyViewController: UIViewController {
     }
 
     @objc private func addCompany() {
-        guard let name = nameField.text, !name.isEmpty else {
-            showAlert(title: "Missing Name", message: "Please add a company name before submitting.")
-            return
+        guard let name = nameField.text, !name.isEmpty else { return }
+
+        let insertQuery = "INSERT INTO Companies (name, description, website, category) VALUES (?, ?, ?, ?)"
+        var stmt: OpaquePointer?
+
+        if sqlite3_prepare_v2(db, insertQuery, -1, &stmt, nil) == SQLITE_OK {
+            sqlite3_bind_text(stmt, 1, name, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 2, descriptionField.text ?? "", -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 3, websiteField.text ?? "", -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 4, categoryField.text ?? "", -1, SQLITE_TRANSIENT)
+
+            if sqlite3_step(stmt) == SQLITE_DONE {
+                print("✅ Company added!")
+                navigationController?.popViewController(animated: true)
+            } else {
+                print("❌ Failed to add company")
+            }
         }
 
-        let inserted = dbHelper.insertCompany(name: name,
-                                              description: descriptionField.text ?? "",
-                                              website: websiteField.text ?? "",
-                                              category: categoryField.text ?? "")
-
-        if inserted {
-            print("✅ Company added!")
-            navigationController?.popViewController(animated: true)
-        } else {
-            showAlert(title: "Error", message: "We couldn't add this company right now. Please try again.")
-        }
-    }
-
-    private func showAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        sqlite3_finalize(stmt)
     }
 }

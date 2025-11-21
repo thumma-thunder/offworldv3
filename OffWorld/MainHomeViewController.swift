@@ -6,25 +6,33 @@
 //
 
 import UIKit
+import SQLite3
 
 final class MainHomeViewController: UIViewController {
 
-    private let dbHelper = DatabaseHelper.shared
+    private var db: OpaquePointer?
     private let scrollView = UIScrollView()
     private let contentView = UIStackView()
-    private var headerViewCount = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "OffWorld Home"
         view.backgroundColor = .systemBackground
+        setupDatabase()
         setupScrollView()
         setupHeader()
+        loadCompanies()
     }
 
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        loadCompanies()
+    // MARK: - Database Setup
+    private func setupDatabase() {
+        let fileURL = try! FileManager.default
+            .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            .appendingPathComponent("OffWorldUsers.sqlite")
+
+        if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
+            print("❌ Error opening database")
+        }
     }
 
     // MARK: - Scroll + Content Setup
@@ -114,25 +122,31 @@ final class MainHomeViewController: UIViewController {
         welcomeLabel.textColor = .secondaryLabel
         welcomeLabel.textAlignment = .center
         contentView.addArrangedSubview(welcomeLabel)
-
-        headerViewCount = contentView.arrangedSubviews.count
     }
 
     // MARK: - Load Companies
     private func loadCompanies() {
-        removeExistingCompanySections()
+        let query = "SELECT name, description, category FROM Companies ORDER BY created_at DESC;"
+        var stmt: OpaquePointer?
 
-        let companies = dbHelper.fetchCompanies()
-
-        if companies.isEmpty {
-            addPlaceholderSection()
+        if sqlite3_prepare_v2(db, query, -1, &stmt, nil) == SQLITE_OK {
+            var hasCompanies = false
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                hasCompanies = true
+                let name = String(cString: sqlite3_column_text(stmt, 0))
+                let desc = String(cString: sqlite3_column_text(stmt, 1))
+                let category = String(cString: sqlite3_column_text(stmt, 2))
+                addCompanySection(name: name, description: desc, category: category)
+            }
+            if !hasCompanies { addPlaceholderSection() }
         } else {
-            companies.forEach { addCompanySection(company: $0) }
+            print("❌ Failed to fetch companies.")
         }
+        sqlite3_finalize(stmt)
     }
 
     // MARK: - Company Cards
-    private func addCompanySection(company: Company) {
+    private func addCompanySection(name: String, description: String, category: String) {
         let card = UIView()
         card.backgroundColor = .secondarySystemBackground
         card.layer.cornerRadius = 14
@@ -143,34 +157,26 @@ final class MainHomeViewController: UIViewController {
         card.translatesAutoresizingMaskIntoConstraints = false
 
         let nameLabel = UILabel()
-        nameLabel.text = company.name
+        nameLabel.text = name
         nameLabel.font = UIFont.boldSystemFont(ofSize: 20)
         nameLabel.textColor = .systemBlue
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let descLabel = UILabel()
-        descLabel.text = company.description.isEmpty ? "No description provided." : company.description
+        descLabel.text = description.isEmpty ? "No description provided." : description
         descLabel.numberOfLines = 0
         descLabel.textColor = .secondaryLabel
         descLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let categoryLabel = UILabel()
-        categoryLabel.text = company.category.isEmpty ? "Category: Unspecified" : "Category: \(company.category)"
+        categoryLabel.text = "Category: \(category)"
         categoryLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         categoryLabel.textColor = .systemGray
         categoryLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let websiteLabel = UILabel()
-        websiteLabel.text = company.website.isEmpty ? "" : company.website
-        websiteLabel.font = UIFont.systemFont(ofSize: 14)
-        websiteLabel.textColor = .link
-        websiteLabel.translatesAutoresizingMaskIntoConstraints = false
-        websiteLabel.numberOfLines = 0
-
         card.addSubview(nameLabel)
         card.addSubview(descLabel)
         card.addSubview(categoryLabel)
-        card.addSubview(websiteLabel)
 
         NSLayoutConstraint.activate([
             nameLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 15),
@@ -184,16 +190,8 @@ final class MainHomeViewController: UIViewController {
             categoryLabel.topAnchor.constraint(equalTo: descLabel.bottomAnchor, constant: 8),
             categoryLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
             categoryLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
-            websiteLabel.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor, constant: 6),
-            websiteLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            websiteLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
-            websiteLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -15)
+            categoryLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -15)
         ])
-
-        if company.website.isEmpty {
-            websiteLabel.isHidden = true
-            categoryLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -15).isActive = true
-        }
 
         contentView.addArrangedSubview(card)
     }
@@ -217,17 +215,5 @@ final class MainHomeViewController: UIViewController {
     @objc private func openLogin() {
         let loginVC = LoginViewController()
         navigationController?.pushViewController(loginVC, animated: true)
-    }
-
-    private func removeExistingCompanySections() {
-        if headerViewCount == 0 {
-            headerViewCount = contentView.arrangedSubviews.count
-        }
-
-        let viewsToRemove = contentView.arrangedSubviews.dropFirst(headerViewCount)
-        viewsToRemove.forEach { view in
-            contentView.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
     }
 }

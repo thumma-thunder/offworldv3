@@ -6,10 +6,11 @@
 //
 
 import UIKit
+import SQLite3
 
 final class SignupViewController: UIViewController {
 
-    private let dbHelper = DatabaseHelper.shared
+    private var db: OpaquePointer?
 
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -26,8 +27,38 @@ final class SignupViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         title = "Create Account"
+        setupDatabase()
         setupLayout()
         registerForKeyboardNotifications()
+    }
+
+    // MARK: - Database Setup
+    private func setupDatabase() {
+        let fileURL = try! FileManager.default
+            .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            .appendingPathComponent("OffWorldUsers.sqlite")
+
+        if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
+            print("❌ Error opening database")
+        }
+
+        let createTableQuery = """
+        CREATE TABLE IF NOT EXISTS Users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            email TEXT,
+            password TEXT,
+            accountType TEXT,
+            zipcode TEXT
+        );
+        """
+
+        if sqlite3_exec(db, createTableQuery, nil, nil, nil) != SQLITE_OK {
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            print("❌ Error creating table: \(errmsg)")
+        } else {
+            print("✅ Users table ready.")
+        }
     }
 
     // MARK: - Layout Setup
@@ -158,19 +189,31 @@ final class SignupViewController: UIViewController {
 
         let accountType = accountTypeControl.titleForSegment(at: accountTypeControl.selectedSegmentIndex) ?? "Individual"
 
-        if dbHelper.createUser(username: username,
-                               email: email,
-                               password: password,
-                               accountType: accountType,
-                               zipcode: zipcode) {
-            print("✅ User saved successfully.")
-            UserDefaults.standard.setValue(accountType, forKey: "accountType")
-            showAlert(title: "Success", message: "Account created successfully!") {
-                self.navigationController?.pushViewController(MainHomeViewController(), animated: true)
+        let insertQuery = "INSERT INTO Users (username, email, password, accountType, zipcode) VALUES (?, ?, ?, ?, ?);"
+        var stmt: OpaquePointer?
+
+        if sqlite3_prepare_v2(db, insertQuery, -1, &stmt, nil) == SQLITE_OK {
+            sqlite3_bind_text(stmt, 1, (username as NSString).utf8String, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 2, (email as NSString).utf8String, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 3, (password as NSString).utf8String, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 4, (accountType as NSString).utf8String, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 5, (zipcode as NSString).utf8String, -1, SQLITE_TRANSIENT)
+
+            if sqlite3_step(stmt) == SQLITE_DONE {
+                print("✅ User saved successfully.")
+                showAlert(title: "Success", message: "Account created successfully!") {
+                    self.navigationController?.pushViewController(MainHomeViewController(), animated: true)
+                }
+            } else {
+                let errmsg = String(cString: sqlite3_errmsg(db)!)
+                showAlert(title: "Error", message: "Insert failed: \(errmsg)")
             }
         } else {
-            showAlert(title: "Error", message: "We couldn't save your account right now. Please try again.")
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            showAlert(title: "Error", message: "Failed to prepare statement: \(errmsg)")
         }
+
+        sqlite3_finalize(stmt)
     }
 
     // MARK: - Helper

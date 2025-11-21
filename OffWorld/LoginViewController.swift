@@ -6,10 +6,11 @@
 //
 
 import UIKit
+import SQLite3
 
 final class LoginViewController: UIViewController {
 
-    private let dbHelper = DatabaseHelper.shared
+    private var db: OpaquePointer?
     private let emailField = UITextField()
     private let passwordField = UITextField()
     private let showPasswordButton = UIButton(type: .custom)
@@ -21,7 +22,18 @@ final class LoginViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         title = "Log In"
+        setupDatabase()
         setupUI()
+    }
+
+    private func setupDatabase() {
+        let fileURL = try! FileManager.default
+            .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            .appendingPathComponent("OffWorldUsers.sqlite")
+
+        if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
+            print("Error opening database")
+        }
     }
 
     private func setupUI() {
@@ -99,12 +111,21 @@ final class LoginViewController: UIViewController {
         guard let email = emailField.text,
               let password = passwordField.text else { return }
 
-        if let accountType = dbHelper.userAccountType(email: email, password: password) {
-            UserDefaults.standard.setValue(accountType, forKey: "accountType")
-            navigationController?.pushViewController(MainHomeViewController(), animated: true)
-        } else {
-            showAlert(title: "Login Failed", message: "Incorrect email or password.")
+        let query = "SELECT * FROM Users WHERE email = ? AND password = ?;"
+        var stmt: OpaquePointer?
+
+        if sqlite3_prepare_v2(db, query, -1, &stmt, nil) == SQLITE_OK {
+            sqlite3_bind_text(stmt, 1, (email as NSString).utf8String, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 2, (password as NSString).utf8String, -1, SQLITE_TRANSIENT)
+
+            if sqlite3_step(stmt) == SQLITE_ROW {
+                navigationController?.pushViewController(MainHomeViewController(), animated: true)
+            } else {
+                showAlert(title: "Login Failed", message: "Incorrect email or password.")
+            }
         }
+
+        sqlite3_finalize(stmt)
     }
 
     private func showAlert(title: String, message: String) {
