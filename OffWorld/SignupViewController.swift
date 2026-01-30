@@ -145,14 +145,59 @@ final class SignupViewController: UIViewController {
         showPasswordButton.setImage(UIImage(systemName: iconName), for: .normal)
     }
 
+    // MARK: - Input Validation
+
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+
+    private func isValidPassword(_ password: String) -> (valid: Bool, message: String) {
+        if password.count < 8 {
+            return (false, "Password must be at least 8 characters long.")
+        }
+        if password.rangeOfCharacter(from: .uppercaseLetters) == nil {
+            return (false, "Password must contain at least one uppercase letter.")
+        }
+        if password.rangeOfCharacter(from: .lowercaseLetters) == nil {
+            return (false, "Password must contain at least one lowercase letter.")
+        }
+        if password.rangeOfCharacter(from: .decimalDigits) == nil {
+            return (false, "Password must contain at least one number.")
+        }
+        return (true, "")
+    }
+
     // MARK: - Handle Signup
     @objc private func handleSignup() {
-        guard let username = usernameField.text,
-              let email = emailField.text,
+        guard let username = usernameField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              let email = emailField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               let password = passwordField.text,
-              let zipcode = zipcodeField.text,
+              let zipcode = zipcodeField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !username.isEmpty, !email.isEmpty, !password.isEmpty, !zipcode.isEmpty else {
             showAlert(title: "Missing Info", message: "Please fill out all fields.")
+            return
+        }
+
+        guard isValidEmail(email) else {
+            showAlert(title: "Invalid Email", message: "Please enter a valid email address.")
+            return
+        }
+
+        let passwordCheck = isValidPassword(password)
+        guard passwordCheck.valid else {
+            showAlert(title: "Weak Password", message: passwordCheck.message)
+            return
+        }
+
+        guard !dbHelper.isEmailTaken(email) else {
+            showAlert(title: "Email Taken", message: "An account with this email already exists.")
+            return
+        }
+
+        guard !dbHelper.isUsernameTaken(username) else {
+            showAlert(title: "Username Taken", message: "This username is already in use. Please choose another.")
             return
         }
 

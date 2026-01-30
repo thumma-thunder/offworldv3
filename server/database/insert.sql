@@ -1,1 +1,1 @@
-insert into userType (typeName)values ("B", "I");
+INSERT INTO userType (typeName) VALUES ('Business'), ('Individual');

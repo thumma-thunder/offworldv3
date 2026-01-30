@@ -7,6 +7,7 @@
 
 import Foundation
 import SQLite3
+import CryptoKit
 
 let SQLITE_TRANSIENT = unsafeBitCast(-1, to: (@convention(c) (UnsafeMutableRawPointer?) -> Void).self)
 
@@ -38,6 +39,31 @@ final class DatabaseHelper {
         }
     }
 
+    // MARK: Password Hashing
+
+    private func generateSalt() -> String {
+        let saltData = (0..<16).map { _ in UInt8.random(in: 0...255) }
+        return Data(saltData).base64EncodedString()
+    }
+
+    private func hashPassword(_ password: String, salt: String) -> String {
+        let combined = password + salt
+        let data = Data(combined.utf8)
+        let hash = SHA256.hash(data: data)
+        return hash.compactMap { String(format: "%02x", $0) }.joined()
+    }
+
+    func createHashedPassword(_ password: String) -> (hash: String, salt: String) {
+        let salt = generateSalt()
+        let hash = hashPassword(password, salt: salt)
+        return (hash, salt)
+    }
+
+    func verifyPassword(_ password: String, hash: String, salt: String) -> Bool {
+        let computedHash = hashPassword(password, salt: salt)
+        return computedHash == hash
+    }
+
     // MARK: Database bootstrap
 
     private func openDatabase() {
@@ -65,9 +91,10 @@ final class DatabaseHelper {
         let createUsers = """
         CREATE TABLE IF NOT EXISTS Users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            email TEXT NOT NULL,
+            username TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
+            salt TEXT NOT NULL,
             accountType TEXT NOT NULL,
             zipcode TEXT NOT NULL
         );
@@ -98,7 +125,9 @@ final class DatabaseHelper {
     func createUser(username: String, email: String, password: String, accountType: String, zipcode: String) -> Bool {
         guard let db else { return false }
 
-        let query = "INSERT INTO Users (username, email, password, accountType, zipcode) VALUES (?, ?, ?, ?, ?);"
+        let (hashedPassword, salt) = createHashedPassword(password)
+
+        let query = "INSERT INTO Users (username, email, password, salt, accountType, zipcode) VALUES (?, ?, ?, ?, ?, ?);"
         var statement: OpaquePointer?
         defer { sqlite3_finalize(statement) }
 
@@ -109,9 +138,10 @@ final class DatabaseHelper {
 
         sqlite3_bind_text(statement, 1, (username as NSString).utf8String, -1, SQLITE_TRANSIENT)
         sqlite3_bind_text(statement, 2, (email as NSString).utf8String, -1, SQLITE_TRANSIENT)
-        sqlite3_bind_text(statement, 3, (password as NSString).utf8String, -1, SQLITE_TRANSIENT)
-        sqlite3_bind_text(statement, 4, (accountType as NSString).utf8String, -1, SQLITE_TRANSIENT)
-        sqlite3_bind_text(statement, 5, (zipcode as NSString).utf8String, -1, SQLITE_TRANSIENT)
+        sqlite3_bind_text(statement, 3, (hashedPassword as NSString).utf8String, -1, SQLITE_TRANSIENT)
+        sqlite3_bind_text(statement, 4, (salt as NSString).utf8String, -1, SQLITE_TRANSIENT)
+        sqlite3_bind_text(statement, 5, (accountType as NSString).utf8String, -1, SQLITE_TRANSIENT)
+        sqlite3_bind_text(statement, 6, (zipcode as NSString).utf8String, -1, SQLITE_TRANSIENT)
 
         if sqlite3_step(statement) == SQLITE_DONE {
             return true
@@ -121,6 +151,44 @@ final class DatabaseHelper {
         }
     }
 
+    func isEmailTaken(_ email: String) -> Bool {
+        guard let db else { return false }
+
+        let query = "SELECT COUNT(*) FROM Users WHERE email = ?;"
+        var statement: OpaquePointer?
+        defer { sqlite3_finalize(statement) }
+
+        guard sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK else {
+            return false
+        }
+
+        sqlite3_bind_text(statement, 1, (email as NSString).utf8String, -1, SQLITE_TRANSIENT)
+
+        if sqlite3_step(statement) == SQLITE_ROW {
+            return sqlite3_column_int(statement, 0) > 0
+        }
+        return false
+    }
+
+    func isUsernameTaken(_ username: String) -> Bool {
+        guard let db else { return false }
+
+        let query = "SELECT COUNT(*) FROM Users WHERE username = ?;"
+        var statement: OpaquePointer?
+        defer { sqlite3_finalize(statement) }
+
+        guard sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK else {
+            return false
+        }
+
+        sqlite3_bind_text(statement, 1, (username as NSString).utf8String, -1, SQLITE_TRANSIENT)
+
+        if sqlite3_step(statement) == SQLITE_ROW {
+            return sqlite3_column_int(statement, 0) > 0
+        }
+        return false
+    }
+
     func validateUser(email: String, password: String) -> Bool {
         userAccountType(email: email, password: password) != nil
     }
@@ -128,7 +196,7 @@ final class DatabaseHelper {
     func userAccountType(email: String, password: String) -> String? {
         guard let db else { return nil }
 
-        let query = "SELECT accountType FROM Users WHERE email = ? AND password = ? LIMIT 1;"
+        let query = "SELECT password, salt, accountType FROM Users WHERE email = ? LIMIT 1;"
         var statement: OpaquePointer?
         defer { sqlite3_finalize(statement) }
 
@@ -138,10 +206,15 @@ final class DatabaseHelper {
         }
 
         sqlite3_bind_text(statement, 1, (email as NSString).utf8String, -1, SQLITE_TRANSIENT)
-        sqlite3_bind_text(statement, 2, (password as NSString).utf8String, -1, SQLITE_TRANSIENT)
 
         if sqlite3_step(statement) == SQLITE_ROW {
-            return stringFromColumn(statement, index: 0)
+            let storedHash = stringFromColumn(statement, index: 0)
+            let salt = stringFromColumn(statement, index: 1)
+            let accountType = stringFromColumn(statement, index: 2)
+
+            if verifyPassword(password, hash: storedHash, salt: salt) {
+                return accountType
+            }
         }
 
         return nil

@@ -85,9 +85,4 @@ final class AccountTypeViewController: UIViewController {
         let companiesVC = CompaniesMainViewController()
         navigationController?.pushViewController(companiesVC, animated: true)
     }
-
-
-        }
-
-    
-
+}
